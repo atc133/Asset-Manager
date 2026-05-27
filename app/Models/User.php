@@ -8,10 +8,8 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Jeffgreco13\FilamentBreezy\Traits\TwoFactorAuthenticatable;
+//use Jeffgreco13\FilamentBreezy\Traits\TwoFactorAuthenticatable;
 use Spatie\Permission\Traits\HasRoles;
-use Filament\Models\Contracts\FilamentUser;
-use Filament\Panel;
 
 #[Fillable([
     'name',
@@ -24,11 +22,8 @@ use Filament\Panel;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, HasRoles, TwoFactorAuthenticatable;
-public function canAccessPanel(Panel $panel): bool
-{
-    return true;
-}
+    use HasFactory, Notifiable, HasRoles; /*TwoFactorAuthenticatable*/
+
     protected function casts(): array
     {
         return [
