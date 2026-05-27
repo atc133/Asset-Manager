@@ -10,7 +10,7 @@
         "barryvdh/laravel-dompdf": "^3.1",
         "chillerlan/php-qrcode": "^5.0",
         "filament/filament": "~4.0",
-        "jeffgreco13/filament-breezy": "^3.2",
+        "jeffgreco13/filament-breezy": "*",
         "laravel/framework": "^13.7",
         "laravel/tinker": "^3.0",
         "maatwebsite/excel": "^3.1",
