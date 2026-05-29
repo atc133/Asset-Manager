@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Jeffgreco13\FilamentBreezy\Traits\TwoFactorAuthenticatable;
 use Spatie\Permission\Traits\HasRoles;
 
 #[Fillable([
@@ -23,11 +24,13 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, HasRoles;
+    use HasFactory, Notifiable, HasRoles, TwoFactorAuthenticatable;
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->hasRole('Admin');
+        return $this->hasRole('Admin')
+            || $this->hasRole('User')
+            || $this->can('view_assets');
     }
 
     protected function casts(): array
