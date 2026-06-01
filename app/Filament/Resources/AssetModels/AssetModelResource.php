@@ -18,8 +18,15 @@ class AssetModelResource extends Resource
 {
     protected static ?string $model = AssetModel::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCpuChip;
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Asset Management';
+
+    protected static ?int $navigationSort = 3;
+
+    protected static ?string $modelLabel = 'Asset Model';
+
+    protected static ?string $pluralModelLabel = 'Asset Models';
     public static function form(Schema $schema): Schema
     {
         return AssetModelForm::configure($schema);

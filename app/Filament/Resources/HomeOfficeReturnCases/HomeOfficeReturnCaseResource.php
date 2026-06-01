@@ -28,11 +28,15 @@ class HomeOfficeReturnCaseResource extends Resource
 {
     protected static ?string $model = HomeOfficeReturnCase::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedArrowUturnLeft;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedWrenchScrewdriver;
 
-    protected static ?string $navigationLabel = 'Home Office Returns';
+protected static string|\UnitEnum|null $navigationGroup = 'Maintenance & Operations';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Operations';
+protected static ?int $navigationSort = 1;
+
+protected static ?string $modelLabel = 'Maintenance Case';
+
+protected static ?string $pluralModelLabel = 'Maintenance Cases';
 
     protected static ?string $recordTitleAttribute = 'id';
 

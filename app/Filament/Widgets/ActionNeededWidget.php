@@ -28,27 +28,57 @@ class ActionNeededWidget extends TableWidget
                 TextColumn::make('severity')
                     ->label('Priority')
                     ->badge()
+                    ->icon(fn (string $state): string => match ($state) {
+                        'High' => 'heroicon-m-exclamation-triangle',
+                        'Medium' => 'heroicon-m-clock',
+                        default => 'heroicon-m-check-circle',
+                    })
                     ->color(fn (string $state): string => match ($state) {
                         'High' => 'danger',
                         'Medium' => 'warning',
-                        default => 'gray',
+                        default => 'success',
                     }),
 
                 TextColumn::make('type')
-                    ->label('Type')
-                    ->badge(),
+                    ->label('Area')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'Assets' => 'primary',
+                        'Repair' => 'warning',
+                        'Employees' => 'info',
+                        'Home Office' => 'gray',
+                        'Maintenance' => 'danger',
+                        default => 'gray',
+                    }),
 
                 TextColumn::make('title')
-                    ->label('Issue'),
+                    ->label('Issue')
+                    ->weight('bold')
+                    ->searchable(),
+
+                TextColumn::make('count')
+                    ->label('Count')
+                    ->badge()
+                    ->color(fn (int $state): string => $state > 0 ? 'danger' : 'success')
+                    ->alignCenter(),
 
                 TextColumn::make('items')
                     ->label('Asset Tags / Items')
-                    ->wrap(),
+                    ->wrap()
+                    ->searchable()
+                    ->copyable()
+                    ->copyMessage('Copied items')
+                    ->copyMessageDuration(1500),
 
                 TextColumn::make('details')
                     ->label('Details')
-                    ->wrap(),
-            ]);
+                    ->wrap()
+                    ->toggleable(),
+            ])
+            ->defaultSort('severity', 'desc')
+            ->emptyStateHeading('No action needed')
+            ->emptyStateDescription('Everything looks clean. No critical asset issues found.')
+            ->emptyStateIcon('heroicon-o-check-circle');
     }
 
     protected function getActionItems(): Collection
@@ -104,31 +134,31 @@ class ActionNeededWidget extends TableWidget
 
         return collect([
             $this->makeActionItem(
-                severity: $missingSerialItems->isNotEmpty() ? 'High' : 'Low',
+                severity: 'High',
                 type: 'Assets',
                 title: 'Missing serial numbers',
-                details: 'Assets without valid serial number.',
+                details: 'Assets without a valid serial number. Fix these first because they reduce traceability.',
                 items: $missingSerialItems,
             ),
 
             $this->makeActionItem(
-                severity: $repairOver30DaysItems->isNotEmpty() ? 'High' : 'Low',
+                severity: 'High',
                 type: 'Repair',
                 title: 'Repair over 30 days',
-                details: 'Assets that have stayed in repair too long.',
+                details: 'Assets that have stayed in repair too long. These need technical follow-up.',
                 items: $repairOver30DaysItems,
             ),
 
             $this->makeActionItem(
-                severity: $withoutLocationItems->isNotEmpty() ? 'Medium' : 'Low',
+                severity: 'Medium',
                 type: 'Assets',
                 title: 'Assets without location',
-                details: 'Assets that do not have current location.',
+                details: 'Assets that do not have a current location. This creates inventory risk.',
                 items: $withoutLocationItems,
             ),
 
             $this->makeActionItem(
-                severity: $inactiveEmployeesItems->isNotEmpty() ? 'High' : 'Low',
+                severity: 'High',
                 type: 'Employees',
                 title: 'Inactive employees with assets',
                 details: 'Inactive employees that still have assigned equipment.',
@@ -136,7 +166,7 @@ class ActionNeededWidget extends TableWidget
             ),
 
             $this->makeActionItem(
-                severity: $homeOfficeReturnItems->isNotEmpty() ? 'High' : 'Low',
+                severity: 'High',
                 type: 'Home Office',
                 title: 'Home office returns pending',
                 details: 'Employees marked as needing to return equipment.',
@@ -144,13 +174,13 @@ class ActionNeededWidget extends TableWidget
             ),
 
             $this->makeActionItem(
-                severity: $openMaintenanceCaseItems->isNotEmpty() ? 'Medium' : 'Low',
+                severity: 'Medium',
                 type: 'Maintenance',
                 title: 'Open maintenance cases',
-                details: 'Repair/maintenance cases that are still open.',
+                details: 'Repair or maintenance cases that are still open.',
                 items: $openMaintenanceCaseItems,
             ),
-        ])->filter(fn (array $item): bool => filled($item['items']));
+        ])->filter(fn (array $item): bool => $item['count'] > 0);
     }
 
     protected function makeActionItem(
@@ -160,11 +190,14 @@ class ActionNeededWidget extends TableWidget
         string $details,
         Collection $items,
     ): array {
+        $count = $items->count();
+
         return [
             'severity' => $severity,
             'type' => $type,
             'title' => $title,
-            'items' => $items->take(15)->implode(', ') . ($items->count() > 15 ? ' +' . ($items->count() - 15) . ' more' : ''),
+            'count' => $count,
+            'items' => $items->take(20)->implode(', ') . ($count > 20 ? ' +' . ($count - 20) . ' more' : ''),
             'details' => $details,
         ];
     }

@@ -20,7 +20,15 @@ class AssetResource extends Resource
 {
     protected static ?string $model = Asset::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedComputerDesktop;
+
+    protected static string|\UnitEnum|null $navigationGroup = 'Asset Management';
+
+    protected static ?int $navigationSort = 1;
+
+    protected static ?string $modelLabel = 'Asset';
+
+    protected static ?string $pluralModelLabel = 'Assets';
 
     protected static ?string $recordTitleAttribute = 'asset_tag';
 

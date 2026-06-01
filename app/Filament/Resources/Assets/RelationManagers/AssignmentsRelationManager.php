@@ -106,9 +106,7 @@ class AssignmentsRelationManager extends RelationManager
                     ->color(fn (): string => $this->assignmentFilter === 'repair' ? 'primary' : 'gray')
                     ->action(fn () => $this->assignmentFilter = 'repair'),
             ])
-            ->headerWidgets([
-                //
-            ])
+          
             ->columns([
                 TextColumn::make('assignment_type')
                     ->label('Type')

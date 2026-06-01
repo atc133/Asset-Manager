@@ -22,7 +22,8 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Jeffgreco13\FilamentBreezy\BreezyCore;
-//use App\Http\Middleware\EnsurePasswordChanged;
+use App\Filament\Widgets\QuickActionsWidget;
+
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -34,41 +35,43 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->plugin(
-                    BreezyCore::make()
+                BreezyCore::make()
                     ->myProfile(
-                            slug: 'my-profile',)
-            ->enableTwoFactorAuthentication(force: true)
-) 
+                        slug: 'my-profile',
+                    )
+                    ->enableTwoFactorAuthentication()
+            )
             ->brandName('Asset Manager')
             ->brandLogo(asset('images/logo.png'))
             ->favicon(asset('images/favicon.ico'))
             ->maxContentWidth('full')
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::hex('#408dcb'),
+                'danger' => Color::Rose,
+                'success' => Color::Emerald,
+                'warning' => Color::Amber,
+                'info' => Color::hex('#8dd4ed'),
+                'gray' => Color::Slate,
             ])
-
             ->discoverResources(
                 in: app_path('Filament/Resources'),
                 for: 'App\\Filament\\Resources'
             )
-
             ->discoverPages(
                 in: app_path('Filament/Pages'),
                 for: 'App\\Filament\\Pages'
             )
-
             ->pages([
                 Dashboard::class,
             ])
-
             ->widgets([
                 AccountWidget::class,
+                QuickActionsWidget::class,
                 ITStatsOverview::class,
                 ActionNeededWidget::class,
                 RecentAssignmentsWidget::class,
                 OpenMaintenanceCasesWidget::class,
             ])
-
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -80,12 +83,8 @@ class AdminPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
-
-            
             ->authMiddleware([
                 Authenticate::class,
-               // EnsurePasswordChanged::class,
-]);
-           
+            ]);
     }
 }

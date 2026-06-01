@@ -12,6 +12,8 @@ class ITStatsOverview extends StatsOverviewWidget
 {
     protected static ?int $sort = -10;
 
+    protected ?string $heading = 'IT Asset Overview';
+
     protected function getStats(): array
     {
         $totalAssets = Asset::count();
@@ -43,41 +45,60 @@ class ITStatsOverview extends StatsOverviewWidget
 
         $openRepairCases = MaintenanceCase::whereIn('status', ['open', 'in_progress'])->count();
 
+        $assignmentRate = $totalAssets > 0
+            ? round(($assignedAssets / $totalAssets) * 100)
+            : 0;
+
+        $healthyAssets = max($totalAssets - $lostOrDamaged - $missingSerial - $repairAssets, 0);
+
         return [
-            Stat::make('Total Assets', $totalAssets)
-                ->description('All registered equipment')
+            Stat::make('Total Assets', number_format($totalAssets))
+                ->description('Complete IT inventory')
+                ->descriptionIcon('heroicon-m-archive-box')
                 ->icon('heroicon-o-computer-desktop')
                 ->color('primary'),
 
-            Stat::make('Assigned', $assignedAssets)
-                ->description('Currently assigned assets')
-                ->icon('heroicon-o-user')
+            Stat::make('Assigned Assets', number_format($assignedAssets))
+                ->description("{$assignmentRate}% currently deployed")
+                ->descriptionIcon('heroicon-m-arrow-trending-up')
+                ->icon('heroicon-o-user-circle')
                 ->color('success'),
 
-            Stat::make('In Storage', $storageAssets)
-                ->description('Available in storage')
+            Stat::make('In Storage', number_format($storageAssets))
+                ->description('Ready for assignment')
+                ->descriptionIcon('heroicon-m-building-storefront')
                 ->icon('heroicon-o-archive-box')
-                ->color('gray'),
+                ->color('info'),
 
-            Stat::make('In Repair', $repairAssets)
-                ->description('Assets currently in repair')
+            Stat::make('In Repair', number_format($repairAssets))
+                ->description($repairAssets > 0 ? 'Needs technical follow-up' : 'No repair queue')
+                ->descriptionIcon($repairAssets > 0 ? 'heroicon-m-exclamation-triangle' : 'heroicon-m-check-circle')
                 ->icon('heroicon-o-wrench-screwdriver')
                 ->color($repairAssets > 0 ? 'warning' : 'success'),
 
-            Stat::make('Missing Serial', $missingSerial)
-                ->description('Assets missing valid serial')
-                ->icon('heroicon-o-exclamation-triangle')
+            Stat::make('Missing Serial', number_format($missingSerial))
+                ->description($missingSerial > 0 ? 'Data cleanup required' : 'Serial data looks clean')
+                ->descriptionIcon($missingSerial > 0 ? 'heroicon-m-exclamation-circle' : 'heroicon-m-check-circle')
+                ->icon('heroicon-o-identification')
                 ->color($missingSerial > 0 ? 'danger' : 'success'),
 
-            Stat::make('Lost / Damaged', $lostOrDamaged)
-                ->description('Lost, damaged, broken, needs check')
+            Stat::make('Lost / Damaged', number_format($lostOrDamaged))
+                ->description($lostOrDamaged > 0 ? 'Risk items detected' : 'No critical asset condition')
+                ->descriptionIcon($lostOrDamaged > 0 ? 'heroicon-m-shield-exclamation' : 'heroicon-m-shield-check')
                 ->icon('heroicon-o-shield-exclamation')
                 ->color($lostOrDamaged > 0 ? 'danger' : 'success'),
 
-            Stat::make('Open Repair Cases', $openRepairCases)
-                ->description('Maintenance cases not closed')
+            Stat::make('Open Repair Cases', number_format($openRepairCases))
+                ->description($openRepairCases > 0 ? 'Open maintenance workload' : 'No open maintenance cases')
+                ->descriptionIcon($openRepairCases > 0 ? 'heroicon-m-clock' : 'heroicon-m-check-circle')
                 ->icon('heroicon-o-clipboard-document-list')
                 ->color($openRepairCases > 0 ? 'warning' : 'success'),
+
+            Stat::make('Healthy Assets', number_format($healthyAssets))
+                ->description('Assets without critical flags')
+                ->descriptionIcon('heroicon-m-sparkles')
+                ->icon('heroicon-o-heart')
+                ->color('primary'),
         ];
     }
 }

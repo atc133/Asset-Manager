@@ -7,16 +7,16 @@ use Filament\Widgets\ChartWidget;
 
 class AssetsByTypeChart extends ChartWidget
 {
-    protected ?string $maxHeight = '260px';
     protected ?string $heading = 'Assets by Type';
 
-    protected static ?int $sort = 3;
+    protected static ?int $sort = -7;
 
-    protected ?string $pollingInterval = null;
-    protected function getType(): string
-    {
-        return 'bar';
-    }
+    protected  ?string $maxHeight = '260px';
+
+    protected int|string|array $columnSpan = [
+        'default' => 'full',
+        'md' => 1,
+    ];
 
     protected function getData(): array
     {
@@ -24,7 +24,8 @@ class AssetsByTypeChart extends ChartWidget
             ->join('asset_types', 'assets.asset_type_id', '=', 'asset_types.id')
             ->selectRaw('asset_types.name as type_name, COUNT(*) as total')
             ->groupBy('asset_types.name')
-            ->orderBy('asset_types.name')
+            ->orderByDesc('total')
+            ->limit(8)
             ->pluck('total', 'type_name');
 
         return [
@@ -33,19 +34,23 @@ class AssetsByTypeChart extends ChartWidget
                     'label' => 'Assets',
                     'data' => $data->values()->toArray(),
                     'backgroundColor' => [
-    '#3b82f6',
-    '#22c55e',
-    '#f59e0b',
-    '#ef4444',
-    '#8b5cf6',
-    '#06b6d4',
-    '#64748b',
-    '#ec4899',
-],
-'borderColor' => '#ffffff',
+                        '#408dcb',
+                        '#dc3a8d',
+                        '#8dd4ed',
+                        '#2563eb',
+                        '#9333ea',
+                        '#06b6d4',
+                        '#f59e0b',
+                        '#10b981',
+                    ],
                 ],
             ],
             'labels' => $data->keys()->toArray(),
         ];
+    }
+
+    protected function getType(): string
+    {
+        return 'doughnut';
     }
 }

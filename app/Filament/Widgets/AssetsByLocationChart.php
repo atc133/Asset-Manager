@@ -11,7 +11,7 @@ class AssetsByLocationChart extends ChartWidget
     protected ?string $heading = 'Assets by Location';
 
     protected static ?int $sort = 4;
-
+    
     protected ?string $pollingInterval = null;
 
     protected function getType(): string

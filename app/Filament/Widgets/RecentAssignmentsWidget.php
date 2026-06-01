@@ -26,34 +26,97 @@ class RecentAssignmentsWidget extends TableWidget
             )
             ->columns([
                 TextColumn::make('asset.asset_tag')
-                    ->label('Asset')
-                    ->searchable(),
+                    ->label('Asset Tag')
+                    ->badge()
+                    ->color('primary')
+                    ->searchable()
+                    ->copyable()
+                    ->copyMessage('Asset tag copied')
+                    ->copyMessageDuration(1500)
+                    ->placeholder('-'),
+
+                TextColumn::make('asset.assetType.name')
+                    ->label('Asset Type')
+                    ->badge()
+                    ->color('info')
+                    ->placeholder('-')
+                    ->toggleable(),
 
                 TextColumn::make('assignment_type')
                     ->label('Type')
-                    ->badge(),
+                    ->badge()
+                    ->icon(fn (?string $state): string => match ($state) {
+                        'employee' => 'heroicon-m-user',
+                        'position' => 'heroicon-m-map-pin',
+                        'storage' => 'heroicon-m-archive-box',
+                        'repair' => 'heroicon-m-wrench-screwdriver',
+                        'lost' => 'heroicon-m-exclamation-triangle',
+                        default => 'heroicon-m-arrow-path',
+                    })
+                    ->color(fn (?string $state): string => match ($state) {
+                        'employee' => 'success',
+                        'position' => 'info',
+                        'storage' => 'gray',
+                        'repair' => 'warning',
+                        'lost' => 'danger',
+                        default => 'primary',
+                    }),
 
                 TextColumn::make('holder')
-                    ->label('Holder')
+                    ->label('Assigned To / Location')
                     ->state(function (AssetAssignment $record): string {
                         return $record->employee?->full_name
                             ?? $record->position?->code
                             ?? $record->location?->name
                             ?? '-';
-                    }),
+                    })
+                    ->searchable(query: function ($query, string $search) {
+                        return $query
+                            ->whereHas('employee', fn ($q) => $q->where('full_name', 'like', "%{$search}%"))
+                            ->orWhereHas('position', fn ($q) => $q->where('code', 'like', "%{$search}%"))
+                            ->orWhereHas('location', fn ($q) => $q->where('name', 'like', "%{$search}%"));
+                    })
+                    ->icon('heroicon-m-user-circle'),
 
                 TextColumn::make('status')
                     ->label('Status')
-                    ->badge(),
+                    ->badge()
+                    ->icon(fn (?string $state): string => match ($state) {
+                        'active' => 'heroicon-m-check-circle',
+                        'completed' => 'heroicon-m-check-badge',
+                        'cancelled' => 'heroicon-m-x-circle',
+                        default => 'heroicon-m-clock',
+                    })
+                    ->color(fn (?string $state): string => match ($state) {
+                        'active' => 'success',
+                        'completed' => 'gray',
+                        'cancelled' => 'danger',
+                        default => 'warning',
+                    }),
+
+                TextColumn::make('location.name')
+                    ->label('Location')
+                    ->badge()
+                    ->color('info')
+                    ->placeholder('-')
+                    ->searchable()
+                    ->toggleable(),
 
                 TextColumn::make('assigned_from')
                     ->label('From')
-                    ->dateTime(),
+                    ->dateTime('d/m/Y H:i')
+                    ->sortable(),
 
                 TextColumn::make('assigned_until')
                     ->label('Until')
-                    ->dateTime()
-                    ->placeholder('-'),
-            ]);
+                    ->dateTime('d/m/Y H:i')
+                    ->placeholder('Active')
+                    ->sortable()
+                    ->toggleable(),
+            ])
+            ->emptyStateHeading('No recent assignments')
+            ->emptyStateDescription('Asset assignment activity will appear here.')
+            ->emptyStateIcon('heroicon-o-arrows-right-left')
+            ->defaultSort('assigned_from', 'desc');
     }
 }

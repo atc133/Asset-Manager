@@ -18,10 +18,17 @@ class AssetAssignmentResource extends Resource
 {
     protected static ?string $model = AssetAssignment::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedArrowsRightLeft;
 
-    protected static ?string $recordTitleAttribute = 'id';
+protected static string|\UnitEnum|null $navigationGroup = 'Maintenance & Operations';
 
+protected static ?int $navigationSort = 3;
+
+protected static ?string $modelLabel = 'Asset Assignment';
+
+protected static ?string $pluralModelLabel = 'Asset Assignments';
+
+protected static ?string $recordTitleAttribute = 'id';
     public static function form(Schema $schema): Schema
     {
         return AssetAssignmentForm::configure($schema);

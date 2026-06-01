@@ -7,24 +7,24 @@ use Filament\Widgets\ChartWidget;
 
 class AssetsByStatusChart extends ChartWidget
 {
-    protected ?string $maxHeight = '260px';
     protected ?string $heading = 'Assets by Status';
 
-    protected static ?int $sort = 1;
+    protected static ?int $sort = -6;
 
-    protected ?string $pollingInterval = null;
+    protected ?string $maxHeight = '260px';
 
-    protected function getType(): string
-    {
-        return 'doughnut';
-    }
+    protected int|string|array $columnSpan = [
+        'default' => 'full',
+        'md' => 1,
+        'xl' => 1,
+    ];
 
     protected function getData(): array
     {
         $data = Asset::query()
             ->selectRaw('status, COUNT(*) as total')
             ->groupBy('status')
-            ->orderBy('status')
+            ->orderByDesc('total')
             ->pluck('total', 'status');
 
         return [
@@ -33,19 +33,24 @@ class AssetsByStatusChart extends ChartWidget
                     'label' => 'Assets',
                     'data' => $data->values()->toArray(),
                     'backgroundColor' => [
-    '#3b82f6',
-    '#22c55e',
-    '#f59e0b',
-    '#ef4444',
-    '#8b5cf6',
-    '#06b6d4',
-    '#64748b',
-    '#ec4899',
-],
-'borderColor' => '#ffffff',
+                        '#408dcb',
+                        '#dc3a8d',
+                        '#8dd4ed',
+                        '#10b981',
+                        '#f59e0b',
+                        '#ef4444',
+                        '#64748b',
+                    ],
                 ],
             ],
-            'labels' => $data->keys()->toArray(),
+            'labels' => $data->keys()
+                ->map(fn ($status) => str($status)->replace('_', ' ')->title()->toString())
+                ->toArray(),
         ];
+    }
+
+    protected function getType(): string
+    {
+        return 'bar';
     }
 }

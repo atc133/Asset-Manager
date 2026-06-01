@@ -18,8 +18,15 @@ class MaintenanceCaseResource extends Resource
 {
     protected static ?string $model = MaintenanceCase::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedWrenchScrewdriver;
 
+protected static string|\UnitEnum|null $navigationGroup = 'Maintenance & Operations';
+
+protected static ?int $navigationSort = 1;
+
+protected static ?string $modelLabel = 'Maintenance Case';
+
+protected static ?string $pluralModelLabel = 'Maintenance Cases';
     public static function form(Schema $schema): Schema
     {
         return MaintenanceCaseForm::configure($schema);
