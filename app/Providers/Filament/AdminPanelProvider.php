@@ -23,6 +23,7 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Jeffgreco13\FilamentBreezy\BreezyCore;
 use App\Filament\Widgets\QuickActionsWidget;
+use App\Filament\Widgets\ReturnOperationsOverview;
 
 
 class AdminPanelProvider extends PanelProvider
@@ -67,6 +68,7 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 AccountWidget::class,
                 QuickActionsWidget::class,
+                ReturnOperationsOverview::class,
                 ITStatsOverview::class,
                 ActionNeededWidget::class,
                 RecentAssignmentsWidget::class,

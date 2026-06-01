@@ -7,9 +7,7 @@ use App\Filament\Resources\HomeOfficeReturnCases\Pages\EditHomeOfficeReturnCase;
 use App\Filament\Resources\HomeOfficeReturnCases\Pages\ListHomeOfficeReturnCases;
 use App\Filament\Resources\HomeOfficeReturnCases\RelationManagers\ItemsRelationManager;
 use App\Filament\Resources\HomeOfficeReturnCases\RelationManagers\NotesRelationManager;
-use App\Models\Employee;
 use App\Models\HomeOfficeReturnCase;
-use App\Models\User;
 use BackedEnum;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
@@ -158,6 +156,41 @@ class HomeOfficeReturnCaseResource extends Resource
                         ? 'danger'
                         : 'gray'),
 
+                TextColumn::make('sla_status')
+                    ->label('SLA')
+                    ->state(function ($record): string {
+                        if (in_array($record->status, ['completed', 'cancelled'])) {
+                            return 'Closed';
+                        }
+
+                        if (! $record->due_date) {
+                            return 'No Due Date';
+                        }
+
+                        if ($record->due_date->lte(now()->subDays(30))) {
+                            return 'Escalation';
+                        }
+
+                        if ($record->due_date->lte(now()->subDays(14))) {
+                            return 'Critical';
+                        }
+
+                        if ($record->due_date->isPast()) {
+                            return 'Overdue';
+                        }
+
+                        return 'On Track';
+                    })
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'Escalation' => 'danger',
+                        'Critical' => 'danger',
+                        'Overdue' => 'warning',
+                        'On Track' => 'success',
+                        'Closed' => 'gray',
+                        default => 'gray',
+                    }),
+
                 TextColumn::make('requested_at')
                     ->label('Requested')
                     ->dateTime('d/m/Y H:i')
@@ -203,6 +236,20 @@ class HomeOfficeReturnCaseResource extends Resource
                         ->whereNotIn('status', ['completed', 'cancelled'])
                         ->whereNotNull('due_date')
                         ->whereDate('due_date', '<', now())),
+
+                Filter::make('critical')
+                    ->label('Critical 14+ Days')
+                    ->query(fn (Builder $query): Builder => $query
+                        ->whereNotIn('status', ['completed', 'cancelled'])
+                        ->whereNotNull('due_date')
+                        ->whereDate('due_date', '<=', now()->subDays(14))),
+
+                Filter::make('escalation')
+                    ->label('Escalation 30+ Days')
+                    ->query(fn (Builder $query): Builder => $query
+                        ->whereNotIn('status', ['completed', 'cancelled'])
+                        ->whereNotNull('due_date')
+                        ->whereDate('due_date', '<=', now()->subDays(30))),
             ])
             ->defaultSort('created_at', 'desc');
     }
