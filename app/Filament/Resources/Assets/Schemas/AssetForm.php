@@ -124,10 +124,17 @@ Select::make('asset_model_id')
                     ->preload(),
 
                 Select::make('current_employee_id')
-                    ->label('Current Employee')
-                    ->relationship('currentEmployee', 'full_name')
-                    ->searchable()
-                    ->preload(),
+    ->label('Current Employee')
+    ->relationship('currentEmployee', 'full_name')
+    ->searchable()
+    ->preload()
+    ->live()
+    ->afterStateUpdated(function ($state, $set): void {
+        if ($state) {
+            $set('status', 'assigned');
+            $set('current_position_id', null);
+        }
+    }),
 
                 Textarea::make('notes')
                     ->label('Notes')

@@ -6,7 +6,6 @@ use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
@@ -21,12 +20,6 @@ class AssignmentsRelationManager extends RelationManager
 
     public ?string $assignmentFilter = null;
 
-    public ?string $searchEmployee = null;
-
-    public ?string $searchPosition = null;
-
-    public ?string $searchLocation = null;
-
     public function form(Schema $schema): Schema
     {
         return $schema
@@ -40,24 +33,7 @@ class AssignmentsRelationManager extends RelationManager
         return $table
             ->modifyQueryUsing(function (Builder $query): Builder {
 
-                if ($this->searchEmployee) {
-                    $query->whereHas('employee', function (Builder $query): void {
-                        $query->where('full_name', 'like', '%' . $this->searchEmployee . '%');
-                    });
-                }
-
-                if ($this->searchPosition) {
-                    $query->whereHas('position', function (Builder $query): void {
-                        $query->where('code', 'like', '%' . $this->searchPosition . '%');
-                    });
-                }
-
-                if ($this->searchLocation) {
-                    $query->whereHas('location', function (Builder $query): void {
-                        $query->where('name', 'like', '%' . $this->searchLocation . '%');
-                    });
-                }
-
+                
                 return match ($this->assignmentFilter) {
                     'active' => $query->where('status', 'active'),
                     'completed' => $query->where('status', 'completed'),
@@ -152,19 +128,7 @@ class AssignmentsRelationManager extends RelationManager
                     ->limit(40)
                     ->toggleable(),
             ])
-            ->contentFooter([
-                TextInput::make('searchEmployee')
-                    ->label('Search Employee')
-                    ->live(),
-
-                TextInput::make('searchPosition')
-                    ->label('Search Position')
-                    ->live(),
-
-                TextInput::make('searchLocation')
-                    ->label('Search Location')
-                    ->live(),
-            ])
+           
             ->defaultSort('assigned_from', 'desc')
             ->recordActions([
                 EditAction::make(),

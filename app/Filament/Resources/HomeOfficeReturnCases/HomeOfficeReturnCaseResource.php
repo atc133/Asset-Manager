@@ -18,25 +18,27 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Table;
-use UnitEnum;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use UnitEnum;
 
 class HomeOfficeReturnCaseResource extends Resource
 {
     protected static ?string $model = HomeOfficeReturnCase::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedWrenchScrewdriver;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedArrowUturnLeft;
 
-protected static string|\UnitEnum|null $navigationGroup = 'Maintenance & Operations';
+    protected static ?string $navigationLabel = 'Home Office Returns';
 
-protected static ?int $navigationSort = 1;
+    protected static string|UnitEnum|null $navigationGroup = 'Maintenance & Operations';
 
-protected static ?string $modelLabel = 'Maintenance Case';
+    protected static ?int $navigationSort = 2;
 
-protected static ?string $pluralModelLabel = 'Maintenance Cases';
+    protected static ?string $modelLabel = 'Home Office Return';
+
+    protected static ?string $pluralModelLabel = 'Home Office Returns';
 
     protected static ?string $recordTitleAttribute = 'id';
 
@@ -45,17 +47,17 @@ protected static ?string $pluralModelLabel = 'Maintenance Cases';
         return $schema->components([
             Select::make('employee_id')
                 ->label('Employee')
-                ->options(fn () => Employee::query()
-                    ->orderBy('full_name')
-                    ->pluck('full_name', 'id')
-                    ->toArray())
+                ->relationship('employee', 'full_name')
                 ->searchable()
+                ->preload()
                 ->required(),
 
             Select::make('status')
                 ->label('Status')
                 ->options([
                     'open' => 'Open',
+                    'contacted' => 'Contacted',
+                    'scheduled' => 'Scheduled',
                     'in_progress' => 'In Progress',
                     'completed' => 'Completed',
                     'cancelled' => 'Cancelled',
@@ -76,11 +78,9 @@ protected static ?string $pluralModelLabel = 'Maintenance Cases';
 
             Select::make('assigned_to_user_id')
                 ->label('Assigned IT User')
-                ->options(fn () => User::query()
-                    ->orderBy('name')
-                    ->pluck('name', 'id')
-                    ->toArray())
-                ->searchable(),
+                ->relationship('assignedTo', 'name')
+                ->searchable()
+                ->preload(),
 
             DatePicker::make('due_date')
                 ->label('Due Date'),
@@ -103,81 +103,108 @@ protected static ?string $pluralModelLabel = 'Maintenance Cases';
                 TextColumn::make('employee.full_name')
                     ->label('Employee')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->icon('heroicon-m-user-circle'),
 
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
-                    ->sortable(),
+                    ->sortable()
+                    ->color(fn (?string $state): string => match ($state) {
+                        'open' => 'danger',
+                        'contacted' => 'info',
+                        'scheduled' => 'warning',
+                        'in_progress' => 'primary',
+                        'completed' => 'success',
+                        'cancelled' => 'gray',
+                        default => 'gray',
+                    }),
 
                 TextColumn::make('priority')
                     ->label('Priority')
                     ->badge()
-                    ->sortable(),
+                    ->sortable()
+                    ->color(fn (?string $state): string => match ($state) {
+                        'urgent' => 'danger',
+                        'high' => 'warning',
+                        'normal' => 'primary',
+                        'low' => 'gray',
+                        default => 'gray',
+                    }),
 
                 TextColumn::make('items_count')
                     ->label('Assets')
-                    ->counts('items'),
+                    ->counts('items')
+                    ->badge()
+                    ->color('primary'),
 
                 TextColumn::make('pending_items_count')
                     ->label('Pending')
-                    ->counts('pendingItems'),
+                    ->counts('pendingItems')
+                    ->badge()
+                    ->color(fn ($state): string => ((int) $state) > 0 ? 'warning' : 'success'),
 
                 TextColumn::make('assignedTo.name')
-                    ->label('Assigned IT')
-                    ->placeholder('-'),
+                    ->label('Technician')
+                    ->icon('heroicon-m-wrench-screwdriver')
+                    ->placeholder('Unassigned'),
 
                 TextColumn::make('due_date')
                     ->label('Due Date')
-                    ->date()
+                    ->date('d/m/Y')
                     ->sortable()
-                    ->placeholder('-'),
+                    ->placeholder('-')
+                    ->color(fn ($record): string => $record->due_date && $record->due_date->isPast() && ! in_array($record->status, ['completed', 'cancelled'])
+                        ? 'danger'
+                        : 'gray'),
 
                 TextColumn::make('requested_at')
                     ->label('Requested')
-                    ->dateTime()
+                    ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->placeholder('-'),
             ])
             ->filters([
-    SelectFilter::make('status')
-        ->label('Status')
-        ->options([
-            'open' => 'Open',
-            'in_progress' => 'In Progress',
-            'completed' => 'Completed',
-            'cancelled' => 'Cancelled',
-        ]),
+                SelectFilter::make('status')
+                    ->label('Status')
+                    ->options([
+                        'open' => 'Open',
+                        'contacted' => 'Contacted',
+                        'scheduled' => 'Scheduled',
+                        'in_progress' => 'In Progress',
+                        'completed' => 'Completed',
+                        'cancelled' => 'Cancelled',
+                    ]),
 
-    SelectFilter::make('priority')
-        ->label('Priority')
-        ->options([
-            'low' => 'Low',
-            'normal' => 'Normal',
-            'high' => 'High',
-            'urgent' => 'Urgent',
-        ]),
+                SelectFilter::make('priority')
+                    ->label('Priority')
+                    ->options([
+                        'low' => 'Low',
+                        'normal' => 'Normal',
+                        'high' => 'High',
+                        'urgent' => 'Urgent',
+                    ]),
 
-    SelectFilter::make('employee_id')
-        ->label('Employee')
-        ->relationship('employee', 'full_name')
-        ->searchable()
-        ->preload(),
+                SelectFilter::make('employee_id')
+                    ->label('Employee')
+                    ->relationship('employee', 'full_name')
+                    ->searchable()
+                    ->preload(),
 
-    SelectFilter::make('assigned_to_user_id')
-        ->label('Assigned IT User')
-        ->relationship('assignedTo', 'name')
-        ->searchable()
-        ->preload(),
+                SelectFilter::make('assigned_to_user_id')
+                    ->label('Assigned IT User')
+                    ->relationship('assignedTo', 'name')
+                    ->searchable()
+                    ->preload(),
 
-    Filter::make('overdue')
-        ->label('Overdue')
-        ->query(fn (Builder $query): Builder => $query
-            ->whereNotIn('status', ['completed', 'cancelled'])
-            ->whereNotNull('due_date')
-            ->whereDate('due_date', '<', now())),
-])
-->defaultSort('created_at', 'desc');
+                Filter::make('overdue')
+                    ->label('Overdue')
+                    ->query(fn (Builder $query): Builder => $query
+                        ->whereNotIn('status', ['completed', 'cancelled'])
+                        ->whereNotNull('due_date')
+                        ->whereDate('due_date', '<', now())),
+            ])
+            ->defaultSort('created_at', 'desc');
     }
 
     public static function getRelations(): array

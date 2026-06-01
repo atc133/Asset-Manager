@@ -28,49 +28,183 @@ class Asset extends Model
         'notes',
     ];
 
-protected static function booted(): void
-{
-    static::creating(function (Asset $asset): void {
-        $assetType = AssetType::find($asset->asset_type_id);
+    protected static function booted(): void
+    {
+        static::creating(function (Asset $asset): void {
+            $assetType = AssetType::find($asset->asset_type_id);
 
-        if ($assetType?->is_consumable) {
-            $asset->asset_tag = null;
+            if ($assetType?->is_consumable) {
+                $asset->asset_tag = null;
 
-            return;
-        }
+                return;
+            }
 
-        if (filled($asset->asset_tag)) {
-            return;
-        }
+            if (filled($asset->asset_tag)) {
+                return;
+            }
 
-        $asset->asset_tag = static::generateAssetTag(
-            assetTypeId: $asset->asset_type_id,
-        );
-    });
-}
+            $asset->asset_tag = static::generateAssetTag(
+                assetTypeId: $asset->asset_type_id,
+            );
+        });
 
-public static function generateAssetTag(int $assetTypeId): string
-{
-    $assetType = AssetType::findOrFail($assetTypeId);
+        static::saved(function (Asset $asset): void {
+            if ($asset->wasRecentlyCreated) {
+                static::syncAssignmentFromCurrentFields($asset);
 
-    $typeCode = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $assetType->code ?: $assetType->name));
+                return;
+            }
 
-    $prefix = $typeCode;
-
-    $lastAsset = static::query()
-        ->where('asset_tag', 'like', "{$prefix}-%")
-        ->orderByDesc('asset_tag')
-        ->first();
-
-    $nextNumber = 1;
-
-    if ($lastAsset) {
-        $lastNumber = (int) str($lastAsset->asset_tag)->afterLast('-')->toString();
-        $nextNumber = $lastNumber + 1;
+            if (
+                $asset->wasChanged('current_employee_id') ||
+                $asset->wasChanged('current_position_id') ||
+                $asset->wasChanged('current_location_id') ||
+                $asset->wasChanged('status')
+            ) {
+                static::syncAssignmentFromCurrentFields($asset);
+            }
+        });
     }
 
-    return "{$prefix}-" . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
-}
+    public static function generateAssetTag(int $assetTypeId): string
+    {
+        $assetType = AssetType::findOrFail($assetTypeId);
+
+        $typeCode = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $assetType->code ?: $assetType->name));
+
+        $prefix = $typeCode;
+
+        $lastAsset = static::query()
+            ->where('asset_tag', 'like', "{$prefix}-%")
+            ->orderByDesc('asset_tag')
+            ->first();
+
+        $nextNumber = 1;
+
+        if ($lastAsset) {
+            $lastNumber = (int) str($lastAsset->asset_tag)->afterLast('-')->toString();
+            $nextNumber = $lastNumber + 1;
+        }
+
+        return "{$prefix}-" . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
+    }
+
+    protected static function syncAssignmentFromCurrentFields(Asset $asset): void
+    {
+        if (filled($asset->current_employee_id)) {
+    if ($asset->status !== 'assigned') {
+        $asset->forceFill([
+            'status' => 'assigned',
+            'current_position_id' => null,
+        ])->saveQuietly();
+    }
+
+    static::createAssignmentIfMissing(
+        asset: $asset,
+        type: 'employee',
+        employeeId: $asset->current_employee_id,
+        positionId: null,
+        locationId: $asset->current_location_id,
+        notes: 'Auto-created from Asset form employee assignment.',
+    );
+
+    return;
+};
+        
+
+        if ($asset->status === 'in_storage' && filled($asset->current_location_id)) {
+            static::createAssignmentIfMissing(
+                asset: $asset,
+                type: 'storage',
+                employeeId: null,
+                positionId: null,
+                locationId: $asset->current_location_id,
+                notes: 'Auto-created from Asset form storage assignment.',
+            );
+
+            return;
+        }
+
+        if ($asset->status === 'in_repair') {
+            static::createAssignmentIfMissing(
+                asset: $asset,
+                type: 'repair',
+                employeeId: null,
+                positionId: null,
+                locationId: $asset->current_location_id,
+                notes: 'Auto-created from Asset form repair status.',
+            );
+
+            return;
+        }
+
+        if ($asset->status === 'lost') {
+            static::createAssignmentIfMissing(
+                asset: $asset,
+                type: 'lost',
+                employeeId: null,
+                positionId: null,
+                locationId: $asset->current_location_id,
+                notes: 'Auto-created from Asset form lost status.',
+            );
+
+            return;
+        }
+
+        if ($asset->status === 'retired') {
+            static::createAssignmentIfMissing(
+                asset: $asset,
+                type: 'retired',
+                employeeId: null,
+                positionId: null,
+                locationId: $asset->current_location_id,
+                notes: 'Auto-created from Asset form retired status.',
+            );
+        }
+    }
+
+    protected static function createAssignmentIfMissing(
+        Asset $asset,
+        string $type,
+        ?int $employeeId,
+        ?int $positionId,
+        ?int $locationId,
+        string $notes,
+    ): void {
+        $existing = AssetAssignment::query()
+            ->where('asset_id', $asset->id)
+            ->where('status', 'active')
+            ->where('assignment_type', $type)
+            ->where('employee_id', $employeeId)
+            ->where('position_id', $positionId)
+            ->where('location_id', $locationId)
+            ->first();
+
+        if ($existing) {
+            return;
+        }
+
+        AssetAssignment::query()
+            ->where('asset_id', $asset->id)
+            ->where('status', 'active')
+            ->update([
+                'status' => 'completed',
+                'assigned_until' => now(),
+            ]);
+
+        AssetAssignment::withoutEvents(function () use ($asset, $type, $employeeId, $positionId, $locationId, $notes): void {
+            AssetAssignment::create([
+                'asset_id' => $asset->id,
+                'assignment_type' => $type,
+                'employee_id' => $employeeId,
+                'position_id' => $positionId,
+                'location_id' => $locationId,
+                'assigned_from' => now(),
+                'status' => 'active',
+                'notes' => $notes,
+            ]);
+        });
+    }
 
     public function getActivitylogOptions(): LogOptions
     {

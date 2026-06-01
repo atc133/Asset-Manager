@@ -34,6 +34,7 @@ class ItemsRelationManager extends RelationManager
                 ->options([
                     'pending' => 'Pending',
                     'returned' => 'Returned',
+                    'checked' => 'Checked',
                     'damaged' => 'Damaged',
                     'missing' => 'Missing',
                     'replaced' => 'Replaced',
