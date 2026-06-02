@@ -7,6 +7,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
+use Filament\Forms\Components\DatePicker;
 
 class AssetForm
 {
@@ -65,6 +66,22 @@ Select::make('asset_model_id')
                 TextInput::make('serial_number')
                     ->label('Serial Number')
                     ->maxLength(255),
+
+                DatePicker::make('received_at')
+                    ->label('Received Date')
+                    ->native(false)
+                    ->displayFormat('d/m/Y')
+                    ->placeholder('Select received date')
+                    ->helperText('The date this asset was received by IT.')
+                    ->default(now())
+                    ->required(),
+                DatePicker::make('warranty_until')
+                    ->label('Warranty Until')
+                    ->native(false),
+
+                DatePicker::make('expected_replacement_at')
+                    ->label('Replacement Date')
+                    ->native(false),
 
                 Select::make('status')
                     ->label('Status')

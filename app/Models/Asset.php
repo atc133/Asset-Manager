@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
+use App\Models\AssetLifecycleEvent;
 
 class Asset extends Model
 {
@@ -17,9 +18,13 @@ class Asset extends Model
         'asset_type_id',
         'brand_id',
         'asset_model_id',
+        'received_at',
         'brand',
         'model',
         'serial_number',
+        'received_at',
+        'warranty_until',
+        'expected_replacement_at',
         'status',
         'condition',
         'current_location_id',
@@ -30,6 +35,16 @@ class Asset extends Model
 
     protected static function booted(): void
     {
+        static::created(function (Asset $asset): void {
+
+    AssetLifecycleEvent::create([
+        'asset_id' => $asset->id,
+        'event_type' => 'created',
+        'created_by' => auth()->id(),
+        'description' => 'Asset created',
+    ]);
+
+});
         static::creating(function (Asset $asset): void {
             $assetType = AssetType::find($asset->asset_type_id);
 
@@ -212,11 +227,15 @@ class Asset extends Model
             ->logOnly([
                 'asset_tag',
                 'asset_type_id',
+                'received_at',
                 'brand_id',
                 'asset_model_id',
                 'brand',
                 'model',
                 'serial_number',
+                'received_at',
+                'warranty_until',
+                'expected_replacement_at',
                 'status',
                 'condition',
                 'current_location_id',
@@ -271,9 +290,19 @@ class Asset extends Model
     {
         return $this->hasMany(MaintenanceCase::class);
     }
-
+protected $casts = [
+    'received_at' => 'date',
+'warranty_until' => 'date',
+'expected_replacement_at' => 'date',
+];
     public function homeOfficeReturnItems(): HasMany
     {
         return $this->hasMany(HomeOfficeReturnItem::class);
     }
+
+    public function lifecycleEvents(): HasMany
+{
+    return $this->hasMany(AssetLifecycleEvent::class)
+        ->latest();
+}
 }

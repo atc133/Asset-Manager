@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
+use App\Models\AssetLifecycleEvent;
 
 class AssetAssignment extends Model
 {
@@ -91,7 +92,34 @@ class AssetAssignment extends Model
             };
 
             $asset->save();
+             AssetLifecycleEvent::create([
+    'asset_id' => $asset->id,
+    'event_type' => $assignment->assignment_type,
+    'employee_id' => $assignment->employee_id,
+    'position_id' => $assignment->position_id,
+    'location_id' => $assignment->location_id,
+    'created_by' => auth()->id(),
+    'description' => match ($assignment->assignment_type) {
+
+        'employee' => 'Assigned to employee: '
+            . ($assignment->employee?->full_name ?? 'Unknown'),
+
+        'position' => 'Assigned to position: '
+            . ($assignment->position?->code ?? 'Unknown'),
+
+        'storage' => 'Moved to storage',
+
+        'repair' => 'Sent to repair',
+
+        'retired' => 'Asset retired',
+
+        'lost' => 'Asset marked as lost',
+
+        default => 'Assignment updated',
+    },
+]);
         });
+       
     }
 
     private static function applyEmployeeAssignment(Asset $asset, AssetAssignment $assignment): void

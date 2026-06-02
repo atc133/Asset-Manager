@@ -21,6 +21,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Filament\Forms\Components\DatePicker;
 
 class AssetsTable
 {
@@ -44,6 +45,34 @@ class AssetsTable
                     ->sortable()
                     ->limit(18)
                     ->placeholder('-'),
+
+                TextColumn::make('received_at')
+                    ->label('Received')
+                    ->date('d/m/Y')
+                    ->sortable()
+                    ->placeholder('-'),
+                
+                TextColumn::make('warranty_until')
+                    ->label('Warranty')
+                    ->date('d/m/Y')
+                    ->sortable()
+                    ->toggleable(),
+                TextColumn::make('asset_age')
+                    ->label('Age')
+                    ->state(function ($record) {
+
+                        if (! $record->received_at) {
+                            return '-';
+                            }
+
+                            return $record->received_at->diffForHumans();
+                        }),
+
+                TextColumn::make('expected_replacement_at')
+                    ->label('Replacement')
+                    ->date('d/m/Y')
+                    ->sortable()
+                    ->toggleable(),
 
                 TextColumn::make('status')
                     ->label('Status')
@@ -150,7 +179,30 @@ SelectFilter::make('asset_model_id')
     ->relationship('assetModel', 'name')
     ->searchable()
     ->preload(),
+Filter::make('received_at')
+    ->label('Received Date')
+    ->form([
+        DatePicker::make('received_from')
+            ->label('Received From')
+            ->native(false)
+            ->displayFormat('d/m/Y'),
 
+        DatePicker::make('received_until')
+            ->label('Received Until')
+            ->native(false)
+            ->displayFormat('d/m/Y'),
+    ])
+    ->query(function (Builder $query, array $data): Builder {
+        return $query
+            ->when(
+                $data['received_from'] ?? null,
+                fn (Builder $query, $date): Builder => $query->whereDate('received_at', '>=', $date),
+            )
+            ->when(
+                $data['received_until'] ?? null,
+                fn (Builder $query, $date): Builder => $query->whereDate('received_at', '<=', $date),
+            );
+    }),
                 Filter::make('missing_serial')
                     ->label('Missing Serial')
                     ->query(fn (Builder $query): Builder => $query

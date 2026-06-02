@@ -15,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use App\Filament\Resources\Assets\RelationManagers\LifecycleEventsRelationManager;
 
 class AssetResource extends Resource
 {
@@ -42,13 +43,14 @@ class AssetResource extends Resource
         return AssetsTable::configure($table);
     }
 
-    public static function getRelations(): array
-    {
-        return [
-            AssignmentsRelationManager::class,
-            MaintenanceCasesRelationManager::class,
-        ];
-    }
+   public static function getRelations(): array
+{
+    return [
+        AssignmentsRelationManager::class,
+        LifecycleEventsRelationManager::class,
+        MaintenanceCasesRelationManager::class,
+    ];
+}
 
     public static function canViewAny(): bool
 {
