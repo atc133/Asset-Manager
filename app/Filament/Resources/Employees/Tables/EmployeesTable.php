@@ -165,7 +165,21 @@ class EmployeesTable
                             'employee' => $record,
                         ]))
                         ->openUrlInNewTab(),
+       Action::make('asset_checkout_pdf')
+    ->label('Asset Check-Out PDF')
+    ->icon('heroicon-o-arrow-up-tray')
+    ->url(fn ($record): string => route('employees.asset-checkout.pdf', [
+        'employee' => $record,
+    ]))
+    ->openUrlInNewTab(),
 
+Action::make('asset_checkin_pdf')
+    ->label('Asset Check-In PDF')
+    ->icon('heroicon-o-arrow-down-tray')
+    ->url(fn ($record): string => route('employees.asset-checkin.pdf', [
+        'employee' => $record,
+    ]))
+    ->openUrlInNewTab(),
                     EditAction::make(),
                 ])
                     ->label('Actions')

@@ -53,3 +53,9 @@ Route::get('/assets/import', [AssetImportController::class, 'form'])
 
 Route::post('/assets/import', [AssetImportController::class, 'import'])
     ->name('assets.import');
+
+Route::get('/employees/{employee}/asset-checkout/pdf', [EmployeeAssignmentFormController::class, 'checkout'])
+    ->name('employees.asset-checkout.pdf');
+
+Route::get('/employees/{employee}/asset-checkin/pdf', [EmployeeAssignmentFormController::class, 'checkin'])
+    ->name('employees.asset-checkin.pdf');

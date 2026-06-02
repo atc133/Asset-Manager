@@ -10,9 +10,16 @@ class EmployeeAssignmentFormController extends Controller
 {
     public function pdf(Employee $employee)
     {
+        return $this->checkout($employee);
+    }
+
+    public function checkout(Employee $employee)
+    {
         $assignments = AssetAssignment::query()
             ->with([
                 'asset.assetType',
+                'asset.brand',
+                'asset.assetModel',
                 'asset.currentLocation',
             ])
             ->where('employee_id', $employee->id)
@@ -21,12 +28,37 @@ class EmployeeAssignmentFormController extends Controller
             ->orderBy('assigned_from', 'desc')
             ->get();
 
-        return Pdf::loadView('exports.employee-assignment-form', [
+        return Pdf::loadView('exports.asset-checkout-form', [
             'employee' => $employee,
             'assignments' => $assignments,
             'date' => now(),
+            'documentTitle' => 'Asset Check-Out Form',
         ])
             ->setPaper('a4')
-            ->download('assignment_form_' . str($employee->full_name)->slug('_') . '.pdf');
+            ->download('asset_checkout_' . str($employee->full_name)->slug('_') . '.pdf');
+    }
+
+    public function checkin(Employee $employee)
+    {
+        $assignments = AssetAssignment::query()
+            ->with([
+                'asset.assetType',
+                'asset.brand',
+                'asset.assetModel',
+                'asset.currentLocation',
+            ])
+            ->where('employee_id', $employee->id)
+            ->where('assignment_type', 'employee')
+            ->orderBy('assigned_from', 'desc')
+            ->get();
+
+        return Pdf::loadView('exports.asset-checkin-form', [
+            'employee' => $employee,
+            'assignments' => $assignments,
+            'date' => now(),
+            'documentTitle' => 'Asset Check-In Form',
+        ])
+            ->setPaper('a4')
+            ->download('asset_checkin_' . str($employee->full_name)->slug('_') . '.pdf');
     }
 }

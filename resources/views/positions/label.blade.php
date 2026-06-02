@@ -102,9 +102,6 @@
         <img src="{{ $qrCode }}" alt="QR Code">
     </div>
 
-    <div class="barcode">
-        <img src="{{ $barcode }}" alt="Barcode">
-    </div>
 
 
 </div>
