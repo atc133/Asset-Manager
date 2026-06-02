@@ -130,4 +130,9 @@ class Employee extends Model
             'return_required_at' => 'date',
         ];
     }
+
+    public function reservations(): HasMany
+{
+    return $this->hasMany(AssetReservation::class);
+}
 }

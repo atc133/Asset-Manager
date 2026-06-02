@@ -132,6 +132,7 @@ class AssetsTable
                     ->options([
                         'available' => 'Available',
                         'assigned' => 'Assigned',
+                        'reserved' => 'Reserved',
                         'in_storage' => 'In Storage',
                         'in_repair' => 'In Repair',
                         'damaged' => 'Damaged',

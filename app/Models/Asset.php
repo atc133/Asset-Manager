@@ -305,4 +305,9 @@ protected $casts = [
     return $this->hasMany(AssetLifecycleEvent::class)
         ->latest();
 }
+
+public function reservations(): HasMany
+{
+    return $this->hasMany(AssetReservation::class);
+}
 }

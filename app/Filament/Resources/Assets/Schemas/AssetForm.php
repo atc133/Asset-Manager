@@ -88,6 +88,7 @@ Select::make('asset_model_id')
                     ->options([
                         'available' => 'Available',
                         'assigned' => 'Assigned',
+                        'reserved' => 'Reserved',
                         'in_storage' => 'In Storage',
                         'in_repair' => 'In Repair',
                         'damaged' => 'Damaged',
