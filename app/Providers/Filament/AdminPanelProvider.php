@@ -25,6 +25,7 @@ use Jeffgreco13\FilamentBreezy\BreezyCore;
 use App\Filament\Widgets\QuickActionsWidget;
 use App\Filament\Widgets\ReturnOperationsOverview;
 use App\Filament\Widgets\AssetHealthOverview;
+use App\Filament\Widgets\LowStockConsumablesWidget;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -70,6 +71,7 @@ class AdminPanelProvider extends PanelProvider
                 QuickActionsWidget::class,
                 ReturnOperationsOverview::class,
                 AssetHealthOverview::class,
+                LowStockConsumablesWidget::class,
                 ITStatsOverview::class,
                 ActionNeededWidget::class,
                 RecentAssignmentsWidget::class,
