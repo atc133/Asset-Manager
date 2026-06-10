@@ -137,7 +137,37 @@
             </tbody>
         </table>
     </div>
+        <div class="section">
+    <div class="section-title">Consumables Issued</div>
 
+    <table>
+        <thead>
+            <tr>
+                <th>Consumable</th>
+                <th>Category</th>
+                <th>Quantity</th>
+                <th>Date</th>
+                <th>Notes</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @forelse ($consumables as $transaction)
+                <tr>
+                    <td>{{ $transaction->consumableType?->name ?? '-' }}</td>
+                    <td>{{ $transaction->consumableType?->category ?? '-' }}</td>
+                    <td>{{ $transaction->quantity }}</td>
+                    <td>{{ $transaction->created_at?->format('Y-m-d H:i') ?? '-' }}</td>
+                    <td>{{ $transaction->notes ?? '-' }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="5">No consumables issued to this employee.</td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
+</div>
     <p class="small">
         The employee confirms return of company equipment listed above. IT confirms that the returned equipment
         has been received and will be checked for condition, completeness, and functionality.

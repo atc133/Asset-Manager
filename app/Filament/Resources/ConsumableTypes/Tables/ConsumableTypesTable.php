@@ -18,6 +18,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Forms\Components\Select;
 
 class ConsumableTypesTable
 {
@@ -122,44 +123,83 @@ class ConsumableTypesTable
                         }),
 
                     Action::make('stock_out')
-                        ->label('Stock Out')
-                        ->icon('heroicon-o-minus-circle')
-                        ->color('warning')
-                        ->form([
-                            TextInput::make('quantity')
-                                ->label('Quantity')
-                                ->numeric()
-                                ->minValue(1)
-                                ->maxValue(fn (ConsumableType $record): int => max(0, $record->current_stock))
-                                ->required(),
+    ->label('Stock Out / Assign')
+    ->icon('heroicon-o-minus-circle')
+    ->color('warning')
+    ->form([
+        Select::make('assignment_type')
+            ->label('Assign To')
+            ->options([
+                'none' => 'No Assignment',
+                'employee' => 'Employee',
+                'position' => 'Position',
+            ])
+            ->default('none')
+            ->required()
+            ->live(),
 
-                            Textarea::make('notes')
-                                ->label('Notes')
-                                ->rows(3),
-                        ])
-                        ->action(function (ConsumableType $record, array $data): void {
-                            if ((int) $data['quantity'] > $record->current_stock) {
-                                Notification::make()
-                                    ->title('Not enough stock')
-                                    ->body('You cannot remove more items than the current stock.')
-                                    ->danger()
-                                    ->send();
+        Select::make('employee_id')
+    ->label('Employee')
+    ->options(
+        \App\Models\Employee::query()
+            ->orderBy('full_name')
+            ->pluck('full_name', 'id')
+            ->toArray()
+    )
+    ->searchable()
+    ->visible(fn ($get): bool => $get('assignment_type') === 'employee')
+    ->required(fn ($get): bool => $get('assignment_type') === 'employee'),
 
-                                return;
-                            }
+        Select::make('position_id')
+    ->label('Position')
+    ->options(
+        \App\Models\Position::query()
+            ->orderBy('code')
+            ->pluck('code', 'id')
+            ->toArray()
+    )
+    ->searchable()
+    ->visible(fn ($get): bool => $get('assignment_type') === 'position')
+    ->required(fn ($get): bool => $get('assignment_type') === 'position'),
 
-                            ConsumableTransaction::create([
-                                'consumable_type_id' => $record->id,
-                                'type' => 'stock_out',
-                                'quantity' => (int) $data['quantity'],
-                                'notes' => $data['notes'] ?? null,
-                            ]);
+        TextInput::make('quantity')
+            ->label('Quantity')
+            ->numeric()
+            ->minValue(1)
+            ->maxValue(fn (ConsumableType $record): int => max(0, $record->current_stock))
+            ->required(),
 
-                            Notification::make()
-                                ->title('Stock removed')
-                                ->success()
-                                ->send();
-                        }),
+        Textarea::make('notes')
+            ->label('Notes')
+            ->rows(3),
+    ])
+    ->action(function (ConsumableType $record, array $data): void {
+        if ((int) $data['quantity'] > $record->current_stock) {
+            Notification::make()
+                ->title('Not enough stock')
+                ->body('You cannot remove more items than the current stock.')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        ConsumableTransaction::create([
+            'consumable_type_id' => $record->id,
+            'type' => 'stock_out',
+            'assignment_type' => $data['assignment_type'] !== 'none' ? $data['assignment_type'] : null,
+            'employee_id' => ($data['assignment_type'] ?? null) === 'employee' ? $data['employee_id'] : null,
+            'position_id' => ($data['assignment_type'] ?? null) === 'position' ? $data['position_id'] : null,
+            'quantity' => (int) $data['quantity'],
+            'notes' => $data['notes'] ?? null,
+        ]);
+
+        Notification::make()
+            ->title('Stock removed')
+            ->body('Consumable stock was updated successfully.')
+            ->success()
+            ->send();
+    }),
 
                     Action::make('adjust_stock')
                         ->label('Adjust Stock')

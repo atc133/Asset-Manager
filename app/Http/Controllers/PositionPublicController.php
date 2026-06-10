@@ -6,6 +6,7 @@ use App\Models\Asset;
 use App\Models\Position;
 use chillerlan\QRCode\QRCode;
 use Picqer\Barcode\BarcodeGeneratorPNG;
+use App\Models\ConsumableTransaction;
 
 class PositionPublicController extends Controller
 {
@@ -19,10 +20,19 @@ class PositionPublicController extends Controller
             ->orderBy('asset_tag')
             ->get();
 
+        $consumables = ConsumableTransaction::query()
+    ->with('consumableType')
+    ->where('assignment_type', 'position')
+    ->where('position_id', $position->id)
+    ->where('type', 'stock_out')
+    ->orderByDesc('created_at')
+    ->get();
+
         return view('positions.public-show', [
-            'position' => $position,
-            'assets' => $assets,
-        ]);
+    'position' => $position,
+    'assets' => $assets,
+    'consumables' => $consumables,
+]);
     }
 
     public function label(Position $position)

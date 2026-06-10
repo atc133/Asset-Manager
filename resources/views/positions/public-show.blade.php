@@ -96,6 +96,48 @@
         </tbody>
     </table>
 </div>
+<h2 style="margin-top: 30px;">
+    Consumables assigned to this position
+</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Consumable</th>
+            <th>Category</th>
+            <th>Quantity</th>
+            <th>Date</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @forelse ($consumables as $transaction)
+            <tr>
+                <td>
+                    {{ $transaction->consumableType?->name ?? '-' }}
+                </td>
+
+                <td>
+                    {{ $transaction->consumableType?->category ?? '-' }}
+                </td>
+
+                <td>
+                    {{ $transaction->quantity }}
+                </td>
+
+                <td>
+                    {{ $transaction->created_at?->format('Y-m-d H:i') }}
+                </td>
+            </tr>
+        @empty
+            <tr>
+                <td colspan="4">
+                    No consumables assigned to this position.
+                </td>
+            </tr>
+        @endforelse
+    </tbody>
+</table>
 
 </body>
 </html>
